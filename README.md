@@ -1,3 +1,41 @@
+# 🐾 TechBox
+
+TechBox is a mobile-first veterinary technician toolbox designed for high-stress, high-impact clinical use — from crash cart moments to daily drug math.
+
+Built by techs, for techs.
+
+## 🚨 Key Features
+
+- Emergency Mode (CPR timer, code logging, PDF summary)
+- CRI Calculator (multi-drug support, infusion math)
+- Drug Reference (dosing, delivery details, prep guides)
+- Common Additive Calculators (KCl, Dextrose, Sodium Bicarb)
+- Nutrition Calculators (RER/MER, slurry kcal)
+- Protocols (shock, HIT, hyperkalemia, seizures, etc.)
+- Persistent patient weight (used across all modules)
+- Mobile-optimized, offline-ready (eventually)
+
+## 🛠️ Tech Stack
+
+- React + TypeScript
+- Vite
+- Tailwind CSS
+- LocalStorage for persistent context (e.g., weight)
+- PWA support planned
+
+## 🗺️ Roadmap
+
+See `TODO.md` for detailed feature planning.
+
+---
+
+## 💻 Getting Started
+
+```bash
+npm install
+npm run dev
+
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
