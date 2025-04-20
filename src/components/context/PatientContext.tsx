@@ -1,29 +1,33 @@
-import { createContext, useContext, useState, ReactNode } from "react"
+// src/components/context/PatientContext.tsx
+
+import React, { createContext, useState, useContext } from "react";
 
 type PatientContextType = {
-    name: string
-    weight: number
-    setName: (name: string) => void
-    setWeight: (weight: number) => void
-}
+    patientName: string;
+    patientWeight: number;
+    setPatientName: (name: string) => void;
+    setPatientWeight: (weight: number) => void;
+};
 
-const PatientContext = createContext<PatientContextType | undefined>(undefined)
+const PatientContext = createContext<PatientContextType | undefined>(undefined);
 
-export function PatientProvider({ children }: { children: ReactNode }) {
-    const [name, setName] = useState("")
-    const [weight, setWeight] = useState(0)
+export const PatientProvider = ({ children }: { children: React.ReactNode }) => {
+    const [patientName, setPatientName] = useState("");
+    const [patientWeight, setPatientWeight] = useState(0);
 
     return (
-        <PatientContext.Provider value={{ name, weight, setName, setWeight }}>
+        <PatientContext.Provider
+            value={{ patientName, patientWeight, setPatientName, setPatientWeight }}
+        >
             {children}
         </PatientContext.Provider>
-    )
-}
+    );
+};
 
-export function usePatient() {
-    const context = useContext(PatientContext)
+export const usePatient = () => {
+    const context = useContext(PatientContext);
     if (!context) {
-        throw new Error("usePatient must be used within a PatientProvider")
+        throw new Error("usePatient must be used within a PatientProvider");
     }
-    return context
-}
+    return context;
+};
