@@ -1,29 +1,46 @@
 import CPRCore from './CPRCore'
 import { usePatient } from '../context/PatientContext'
 import { Input } from '../ui/input'
+import { Button } from '../ui/button'
+import { useState } from 'react'
 
 function EmergencyMode() {
     const { patientWeight, setPatientWeight } = usePatient()
+    const [tempWeight, setTempWeight] = useState("")
 
     return (
         <>
             {patientWeight === 0 && (
-                <div className="mb-4">
-                    <label htmlFor="quick-weight" className="text-sm font-medium">
-                        Patient Weight (kg)
+                <div className="mb-6 space-y-2 max-w-xs mx-auto text-center">
+                    <label htmlFor="quick-weight" className="block text-sm font-medium">
+                        Estimated Patient Weight (kg)
                     </label>
                     <Input
                         id="quick-weight"
                         type="number"
                         placeholder="Enter weight"
-                        value={patientWeight || ""}
-                        onChange={(e) => setPatientWeight(parseFloat(e.target.value) || 0)}
-                        className="mt-1 w-32"
+                        value={tempWeight}
+                        onChange={(e) => setTempWeight(e.target.value)}
+                        className="w-full"
+                        autoFocus
                     />
+                    <Button
+                        className="w-full mt-2"
+                        onClick={() => {
+                            const parsed = parseFloat(tempWeight)
+                            if (!isNaN(parsed) && parsed > 0) {
+                                setPatientWeight(parsed)
+                            } else {
+                                alert("Please enter a valid weight.")
+                            }
+                        }}
+                    >
+                        Confirm & Start
+                    </Button>
                 </div>
             )}
 
-            <CPRCore />
+            {patientWeight !== 0 && <CPRCore />}
         </>
     )
 }

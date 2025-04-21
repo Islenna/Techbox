@@ -1,75 +1,31 @@
 // components/Emergency/CprCore.tsx
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { speak } from "@/lib/speak"
-import { Heart } from "lucide-react"
-import { calculateAtropine, calculateEpinephrine } from "@/components/utils/DrugMath"
 import { usePatient } from "@/components/context/PatientContext"
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion"
+import EmergencyDrugCalc from "@/components/Emergency/EmergencyDrugCalc"
+import { EventLogEntry } from "@/components/types"
+import { generateCPRReport } from "@/lib/pdf"
+import VitalsIndicators from "@/components/Emergency/VitalsIndicator"
+import { useCPRTimer } from "./useCPRTimer"
 
 const CPRCore = () => {
+    const { patientName } = usePatient()
     const { patientWeight } = usePatient()
-    const [elapsed, setElapsed] = useState(0)
     const [isRunning, setIsRunning] = useState(false)
-    const [cycleCount, setCycleCount] = useState(0)
-    const [beat, setBeat] = useState(false)
-    const audioRef = useRef<HTMLAudioElement>(null)
-    const [eventLog, setEventLog] = useState<{ time: string; realTime: string; label: string }[]>([])
+    const [eventLog, setEventLog] = useState<EventLogEntry[]>([])
+    const [atropineGiven, setAtropineGiven] = useState(false)
 
-    const lastCycleTime = useRef(0)
+    const {
+        elapsed,
+        cycleCount,
+        beat,
+        breathe,
+        audioRef,
+        setElapsed,
+        setCycleCount
+    } = useCPRTimer(patientWeight, isRunning)
 
-    // Timer + cycle handler
-    useEffect(() => {
-        let timerInterval: NodeJS.Timeout | null = null;
-        let beatInterval: NodeJS.Timeout | null = null;
-
-        if (isRunning) {
-            // 🕒 Timer (increments every 1 second)
-            timerInterval = setInterval(() => {
-                setElapsed(prev => {
-                    const newTime = prev + 1;
-
-                    if (newTime % 120 === 0 && newTime !== lastCycleTime.current) {
-                        setCycleCount(c => c + 1);
-                        speak("Two minutes. Time to rotate and check rhythm.");
-                        lastCycleTime.current = newTime;
-                    }
-
-                    return newTime;
-
-                });
-
-            }, 1000);
-
-            // 💓 Metronome (~110 bpm)
-            beatInterval = setInterval(() => {
-                setBeat(true);
-
-                // Safely play tick
-                if (audioRef.current) {
-                    audioRef.current.pause(); // just in case
-                    audioRef.current.currentTime = 0;
-                    audioRef.current.play().catch(err => {
-                        console.warn("Metronome audio play failed", err);
-                    });
-                }
-
-                setTimeout(() => setBeat(false), 100);
-            }, 545);
-
-        }
-
-        // Cleanup
-        return () => {
-            if (timerInterval) clearInterval(timerInterval);
-            if (beatInterval) clearInterval(beatInterval);
-        };
-    }, [isRunning]);
 
 
     const logEvent = (label: string) => {
@@ -98,15 +54,9 @@ const CPRCore = () => {
             <h2 className="text-3xl font-bold">CPR Timer</h2>
             <div className="text-6xl font-mono">{formatTime(elapsed)}</div>
             <p className="text-muted-foreground">Cycle {cycleCount + 1}</p>
+            {/*Heartbeat and breath cues: */}
+            <VitalsIndicators beat={beat} breathe={breathe} />
 
-            {/* Metronome Dot */}
-            <div className="flex justify-center">
-                <Heart
-                    className={`w-12 h-12 transition-transform duration-100 ${beat ? "text-primary scale-125" : "text-muted scale-100"
-                        }`}
-                    fill={beat ? "currentColor" : "none"}
-                />
-            </div>
             <div className="flex justify-center gap-4 mt-4">
                 <Button
                     variant={isRunning ? "secondary" : "default"}
@@ -131,8 +81,8 @@ const CPRCore = () => {
             <Button onClick={() => logEvent("Intubated")} variant="outline">
                 Log Intubation
             </Button>
-            <div className="mt-6 text-left">
-                <h3 className="text-sm font-semibold mb-2">Event Log</h3>
+            <details className="w-full text-left mt-4">
+                <summary className="cursor-pointer text-sm font-semibold">Event Log</summary>
                 <ul className="space-y-1 text-sm">
                     {eventLog.map((e, i) => (
                         <li key={i}>
@@ -144,57 +94,14 @@ const CPRCore = () => {
                         </li>
                     ))}
                 </ul>
+            </details>
 
-            </div>
-
-            <Accordion type="single" collapsible className="w-full mt-4">
-                <AccordionItem value="drugs">
-                    <AccordionTrigger className="text-lg font-semibold">
-                        Emergency Drugs
-                    </AccordionTrigger>
-                    <AccordionContent className="flex flex-wrap gap-2 justify-center">
-                        {/* Epi IV */}
-                        <Button
-                            onClick={() => {
-                                const { dose, volume } = calculateEpinephrine(patientWeight, "IV")
-                                logEvent(`Epi (IV): ${dose} mg (${volume} mL)`)
-                            }}
-                        >
-                            Epi (IV) – {calculateEpinephrine(patientWeight, "IV").volume} mL
-                        </Button>
-
-                        {/* Epi ET */}
-                        <Button
-                            onClick={() => {
-                                const { dose, volume } = calculateEpinephrine(patientWeight, "ET")
-                                logEvent(`Epi (ET): ${dose} mg (${volume} mL)`)
-                            }}
-                        >
-                            Epi (ET) – {calculateEpinephrine(patientWeight, "ET").volume} mL
-                        </Button>
-
-                        {/* Atropine Low */}
-                        <Button
-                            onClick={() => {
-                                const { low } = calculateAtropine(patientWeight, "IV")
-                                logEvent(`Atropine (Low): ${low.dose} mg (${low.volume} mL)`)
-                            }}
-                        >
-                            Atropine Low – {calculateAtropine(patientWeight, "IV").low.volume} mL
-                        </Button>
-
-                        {/* Atropine High */}
-                        <Button
-                            onClick={() => {
-                                const { high } = calculateAtropine(patientWeight, "IV")
-                                logEvent(`Atropine (High): ${high.dose} mg (${high.volume} mL)`)
-                            }}
-                        >
-                            Atropine High – {calculateAtropine(patientWeight, "IV").high.volume} mL
-                        </Button>
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
+            <EmergencyDrugCalc
+                patientWeight={patientWeight}
+                logEvent={logEvent}
+                atropineGiven={atropineGiven}
+                setAtropineGiven={setAtropineGiven}
+            />
             <Button
                 variant="destructive"
                 className="w-full text-lg py-6"
@@ -214,6 +121,20 @@ const CPRCore = () => {
                 ROSC Achieved
             </Button>
 
+            <Button
+                onClick={() => {
+                    const now = new Date().toLocaleTimeString()
+                    generateCPRReport(
+                        patientName,
+                        patientWeight,
+                        eventLog[0]?.realTime || "N/A",
+                        now,
+                        eventLog
+                    )
+                }}
+            >
+                Download Report
+            </Button>
 
 
 

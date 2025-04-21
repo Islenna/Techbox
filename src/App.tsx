@@ -6,12 +6,14 @@ import EmergencyMode from './components/Emergency/EmergencyMode';
 import CRIs from './components/CRIs/CRIs';
 import Drugs from './components/Drugs/Drugs';
 import Protocols from './components/Protocols/Protocols';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function App() {
 
   return (
     <BrowserRouter>
       <PatientProvider>
+        <Toaster />
         <div className="min-h-screen bg-background text-foreground">
           <Navbar />
           <main className="p-4">
