@@ -39,7 +39,15 @@ const Metronome = () => {
             {/* Toggle Button */}
             <Button
                 variant={isOn ? "secondary" : "default"}
-                onClick={() => setIsOn(prev => !prev)}
+                onClick={() => {
+                    if (!isOn && audioRef.current) {
+                        // Mobile needs for sound
+                        audioRef.current.play().catch(() => {
+                        })
+                    }
+
+                    setIsOn(prev => !prev)
+                }}
             >
                 {isOn ? "Stop Metronome" : "Start Metronome"}
             </Button>
