@@ -8,7 +8,7 @@ export default function Navbar() {
         <nav className="w-full p-4 border-b bg-card text-foreground">
             <div className="max-w-screen-xl mx-auto flex items-center justify-between">
                 {/* Left: App Title */}
-                <h1 className="font-bold text-xl">TechBox</h1>
+                <h1 className="font-bold text-xl">BarkBlue</h1>
 
                 {/* Center: Patient Info (conditionally shown) */}
                 {patientName ? (
@@ -21,6 +21,7 @@ export default function Navbar() {
 
                 {/* Right: Links */}
                 <div className="flex gap-4 text-sm">
+                    <Link to="/emergency" className="hover:underline">CPR</Link>
                     <Link to="/cris" className="hover:underline">CRIs</Link>
                     <Link to="/drugs" className="hover:underline">Drugs</Link>
                     <Link to="/protocols" className="hover:underline">Protocols</Link>
