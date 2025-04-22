@@ -12,18 +12,19 @@ const Metronome = () => {
         if (isOn) {
             interval = setInterval(() => {
                 setBeat(true)
-                if (audioRef.current) {
-                    audioRef.current.currentTime = 0
-                    audioRef.current.play()
-                }
 
-                audioRef.current?.play()
+                const tick = new Audio("/tick.mp3")
+                tick.play().catch(err => {
+                    console.warn("Mobile autoplay prevented tick:", err)
+                })
+
                 setTimeout(() => setBeat(false), 100)
-            }, 545) // ~110 BPM
+            }, 545)
         }
 
         return () => clearInterval(interval)
     }, [isOn])
+
 
     return (
         <div className="flex flex-col items-center space-y-4">
